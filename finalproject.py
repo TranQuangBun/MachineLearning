@@ -106,10 +106,7 @@ def main():
     st.set_page_config(page_title="Data Prediction", page_icon="🖥")
     st.title("📑 :blue[Thông tin dữ liệu]")
         
-    logo = Image.open("img/logo.jpg")
-    st.markdown("##")
-    #side bar
-    st.sidebar.image("img/logo.jpg")
+
 
     uploaded_file = st.sidebar.file_uploader("📁 Tải lên tệp CSV", type=["csv"])
     if uploaded_file is not None:
