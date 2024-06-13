@@ -37,6 +37,7 @@ def replace_null_with_mean(df, column_name):
     else:
         st.error(f"Cột '{column_name}' không tồn tại.")
 
+
 def replace_null_with_median(df, column_name):
     if column_name in df.columns:
         median_value = df[column_name].median()
@@ -45,12 +46,14 @@ def replace_null_with_median(df, column_name):
     else:
         st.error(f"Cột '{column_name}' không tồn tại.")
 
+
 def replace_null_with_custom_value(df, column_name, custom_value):
     if column_name in df.columns:
         df[column_name].fillna(custom_value, inplace=True)
         st.success(f"Đã thay thế giá trị null trong cột '{column_name}' bằng giá trị tùy chỉnh thành công.")
     else:
         st.error(f"Cột '{column_name}' không tồn tại.")
+
 
 def save_file(df, filename):
     df.to_csv(filename, index=False)

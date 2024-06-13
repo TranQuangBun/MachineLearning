@@ -14,12 +14,15 @@ import pydotplus
 import pydot
 import seaborn as sns
 from io import StringIO
+import pickle
+import requests
 
 import matplotlib.pyplot as plt
 import numpy as np
 from streamlit_option_menu import option_menu
 
 import preprocess
+
 
 # Function to convert categorical features to numerical
 def convert_to_number(df, column_name):
@@ -35,6 +38,35 @@ def display_plot(y_test, y_pred, model_choice):
     ax.set_ylabel("Predicted Values")
     ax.set_title(f"{model_choice}")
     st.pyplot(fig)
+
+
+def fetch_poster(music_title):
+    response = requests.get("https://saavn.me/search/songs?query={}&page=1&limit=2".format(music_title))
+    try:
+        data = response.json()
+        return data['data']['results'][0]['image'][2]['link']
+    except ValueError:
+        print("Invalid JSON")
+        return None
+
+
+def recommend(musics):
+    music_index = music[music['title'] == musics].index[0]
+    distances = similarity[music_index]
+    music_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
+    recommended_music = []
+    recommended_music_poster = []
+    for i in music_list:
+        music_title = music.iloc[i[0]].title
+        recommended_music.append(music.iloc[i[0]].title)
+        # recommended_music_poster.append(fetch_poster(music_title))
+    return recommended_music
+
+
+music_dict = pickle.load(open(r'C:\Users\Acer\Downloads\musicrec.pkl', 'rb'))
+music = pd.DataFrame(music_dict)
+
+similarity = pickle.load(open(r'C:\Users\Acer\Downloads\similarities.pkl', 'rb'))
 
 
 # Main function to render Streamlit app
@@ -81,7 +113,7 @@ def main():
         st.markdown("""---""")
 
         st.title(':red[Tiền xử lý dữ liệu]  🔧')
-        cot1,cot2,cot3 = st.columns(3)
+        cot1, cot2, cot3 = st.columns(3)
         with cot1:
             st.info('XÓA COLUMN')
             column_to_delete = st.selectbox("Chọn cột để xóa", df.columns)
@@ -96,7 +128,6 @@ def main():
             st.info('CHUYỂN ĐỔI BIẾN PHÂN LOẠI THÀNH BIẾN SỐ')
             if st.button("Chuyển đổi biến phân loại thành số"):
                 preprocess.convert_categorical_to_numeric(df)
-
 
         st.markdown("""---""")
 
@@ -134,8 +165,7 @@ def main():
 
         st.markdown("""---""")
 
-
-        st.title(':red[Xử lý dữ liệu ở đây nhé!]  💖')
+        st.title(':red[Chọn biến chạy model!]  💖')
         col3, col4 = st.columns(2)
         with col3:
             features = st.multiselect("Chọn biến x:", df.columns)
@@ -194,6 +224,24 @@ def main():
                             df[features[0]].value_counts().plot(kind='pie', autopct='%1.1f%%', ax=ax)
 
                     st.pyplot(fig)
+    st.title(":green[Recommend Music 🎶]")
+
+    selected_music_name = st.selectbox('Chọn bài hát bạn muốn dự đoán ', music['title'].values)
+
+    if st.button('Recommend'):
+        st.info(':red[Những bài hát có sự tương đồng \n, dựa trên Genre, Album/Movies, User-rating]')
+
+        names = recommend(selected_music_name)
+
+        data = {
+            "Bài hát 1 👇": [names[0]],
+            "Bài hát 2 👇": [names[1]],
+            "Bài hát 3 👇": [names[2]],
+            "Bài hát 4 👇": [names[3]],
+            "Bài hát 5 👇": [names[4]]
+        }
+
+        st.table(data)
 
 
 # logistic_regression
@@ -304,6 +352,15 @@ def random_forest_model(st, df_copy, df, features, target, model_choice):
         st.write("Confusion Matrix:")
         st.write(cm)
     st.write(f"Độ chính xác của mô hình {model_choice}: {str(accuracy)}")
+    selected_music_name = st.selectbox('Select a music you like', music['title'].values)
+
+    if st.button('Recommend'):
+        names = recommend(selected_music_name)
+        st.text(names[0])
+        st.text(names[1])
+        st.text(names[2])
+        st.text(names[3])
+        st.text(names[4])
 
 
 if __name__ == "__main__":
